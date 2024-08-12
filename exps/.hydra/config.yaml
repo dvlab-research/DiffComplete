@@ -1,0 +1,106 @@
+diffusion:
+  model: GaussianDiffusion
+  test_model: RepaintGaussianDiffusion
+  step: 1000
+  model_var_type: FIXED_SMALL
+  learn_sigma: false
+  sampler: second-order
+  model_mean_type: EPSILON
+  rescale_timestep: false
+  loss_type: MSE
+  beta_schedule: linear
+  scale_ratio: 1.0
+  diffusion_learn_sigma: false
+net:
+  network: ResUNet
+  in_channels: 1
+  model_channels: 64
+  num_res_blocks: 3
+  channel_mult: 1,2,2,2
+  attention_resolutions: null
+  unet_activation: null
+  weights: null
+  padding_mode: zero
+  activation_type: leaky
+  activation_param: 0.02
+  use_dense_conv: true
+  use_gradient_clip: false
+  gradient_clip_value: 1.0
+  use_instance_norm: true
+  use_instance_affine: true
+  use_layer_norm: false
+  use_layer_affine: false
+  train_with_gt_coeff: true
+optimizer:
+  optimizer: Adam
+  lr: 0.0001
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  lr_decay: false
+  weight_decay: 0
+  scheduler: StepLR
+  step_size: 500
+  step_gamma: 0.1
+  poly_power: 0.9
+  exp_gamma: 0.95
+  exp_step_size: 445
+data:
+  dataset: ShapeNetDataset
+  train_file: null
+  data_dir: data/res_32
+  collate_fn: null
+  input_transform: null
+  targer_transform: null
+  cache_data: false
+  persistent_workers: false
+  suffix: .npy
+train:
+  max_iter: 600000
+  is_train: true
+  stat_freq: 50
+  val_freq: 2000
+  empty_cache_freq: 1
+  train_phase: train
+  overwrite_weights: true
+  resume: true
+  resume_optimizer: True,
+  eval_upsample: false
+  lenient_weight_loading: False,
+  mix_precision: true
+  use_gradient_clip: false
+distributed:
+  distributed_world_size: 2
+  distributed_rank: 0
+  distributed_backend: nccl
+  distributed_init_method: null
+  distributed_port: 10010
+  device_id: 0
+  distributed_no_spawn: true
+  ddp_backend: c10d
+  bucket_cap_mb: 25
+test:
+  test_cnt: 201
+  clip_noise: false
+  use_ddim: false
+  ddim_eta: 1.0
+  test_phase: test
+misc:
+  is_cuda: true
+  load_path: null
+  log_step: 50
+  seed: 123
+  load_bn: all_bn
+  resume_config: null
+exp:
+  res: 32
+  representation: sdf
+  class: chair
+  output_dir: exps
+  special: ''
+  test_batch_size: 4
+  test_epoch: 620
+  batch_size: 12
+  num_gpus: 2
+  num_workers: 12
+  skip_validate: true
+  log_dir: exps

@@ -1,0 +1,140 @@
+# This source code is licensed under the MIT license found in the
+# LICENSE file in the root directory of this source tree.
+
+diffusion:
+  model: GaussianDiffusion
+  test_model: GaussianDiffusion
+  step: 1000
+  model_var_type: FIXED_SMALL
+  learn_sigma: False
+  sampler: 'second-order'
+  model_mean_type: EPSILON
+  rescale_timestep: False
+  loss_type: MSE
+  beta_schedule: 'linear'
+  scale_ratio: 1.0
+  diffusion_learn_sigma: False
+  respacing: 10
+#  diffusion_model_var_type: LEARNED_RANGE
+#  diffusion_loss_type: RESCALED_MSE
+
+#  if diffusion_learn_sigma:
+#    diffusion_model_var_type = ModelVarType.LEARNED_RANGE
+#    diffusion_loss_type = LossType.RESCALED_MSE
+
+net:
+  network: ControlledUNet
+  in_channels: 1
+  model_channels: 64
+  hint_channels: 2
+  num_res_blocks: 3
+  channel_mult: 1,2,2,2
+  attention_resolutions:
+  unet_activation:
+  weights:
+  controlnet: ControlNet
+  control_weights:
+  sd_locked: True
+
+optimizer:
+  optimizer: Adam
+  lr: 0.0001
+  adam_beta1: 0.9
+  adam_beta2: 0.999
+  lr_decay: False
+  weight_decay: 0
+
+  # Scheduler
+  scheduler: StepLR
+  step_size: 500
+  step_gamma: 0.1
+  poly_power: 0.9
+  exp_gamma: 0.95
+  exp_step_size: 445
+
+data:
+  per_class: True
+  class_id: '03001627'
+  dataset: ControlledEPNDataset
+  train_file:
+  data_dir: data/3d_epn
+  collate_fn:
+  input_transform:
+  targer_transform:
+  cache_data: False
+  persistent_workers: True
+  suffix: .pth
+  log_df: False
+  trunc_distance: 3.0
+  
+train:
+  train_phase: train
+  debug: False
+  max_iter: 300000
+  is_train: True
+  stat_freq: 50
+  val_freq: 20000
+  empty_cache_freq: 1
+  overwrite_weights: False
+  resume: True
+  resume_optimizer: True
+  eval_upsample: False
+  lenient_weight_loading: False
+  mix_precision: True
+  use_gradient_clip: False
+  gradient_clip_value: 1.0
+  weighted_loss: False
+
+# Test
+test:
+  partial_shape: True
+  test_cnt: 160
+  clip_noise: False
+  use_ddim: False
+  ddim_eta: 1.0
+  test_phase: test
+  test_batch_size: 4
+
+# Misc
+misc:
+  seed: 123
+
+exp:
+  res: 32
+  representation: tsdf
+  batch_size: 32
+  num_gpus: 4
+  num_workers: 32
+
+  skip_validate: True
+  log_dir: exps/epn_${data.class_id}_${exp.representation}_${exp.res}
+
+
+################################################################################
+# slurm parameters
+################################################################################
+defaults:
+  - hydra/launcher: submitit_slurm
+  - hydra/hydra_logging: colorlog
+
+hydra:
+  run:
+    dir: ${exp.log_dir}
+  sweep:
+    dir: ${exp.log_dir}
+  launcher:
+    partition: dev
+    submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+    name: ${hydra.job.name}
+    timeout_min: 4320
+    cpus_per_task: 24
+    gpus_per_node: ${exp.num_gpus}
+    tasks_per_node: 1
+    mem_gb: 256
+    nodes: 1
+    constraint:
+    exclude: seti
+    max_num_timeout: 3
+
+
+
